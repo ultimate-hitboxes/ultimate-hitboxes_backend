@@ -43,7 +43,7 @@ for character in data["characters"]:
                 hitbox.pop("color")
                 hitbox.pop("frames")
 
-                hitboxSQL=Hitbox(value=move["value"]+"-hitbox"+index,move=move["value"].lower(),color=color,notes=notes,frames=frames,data=hitbox)
+                hitboxSQL=Hitbox(value=move["value"]+"-hitbox"+index,move=move["value"],color=color,notes=notes,frames=frames,data=hitbox)
                 db.session.add(hitboxSQL)
         if "grabs" in move:
             for i in range(0, len(move["grabs"])):
@@ -63,7 +63,7 @@ for character in data["characters"]:
                 grab.pop("color")
                 grab.pop("frames")
 
-                grabSQL=Grab(value=move["value"]+"-grab"+index,move=move["value"].lower(),color=color,notes=notes,frames=frames,data=grab)
+                grabSQL=Grab(value=move["value"]+"-grab"+index,move=move["value"],color=color,notes=notes,frames=frames,data=grab)
                 db.session.add(grabSQL)
         if "throws" in move:
             for i in range(0, len(move["throws"])):
@@ -83,7 +83,7 @@ for character in data["characters"]:
                 throw.pop("color")
                 throw.pop("frames")
 
-                throwSQL=Throw(value=move["value"]+"-throw"+index,move=move["value"].lower(),color=color,notes=notes,frames=frames,data=throw)
+                throwSQL=Throw(value=move["value"]+"-throw"+index,move=move["value"],color=color,notes=notes,frames=frames,data=throw)
                 db.session.add(throwSQL)
 
         if "hurtboxes" in move:
@@ -97,7 +97,7 @@ for character in data["characters"]:
 
                 hurtbox = move["hurtboxes"][i]
 
-                hurtboxSQL=Hurtbox(value=move["value"]+"-hurtbox"+index,move=move["value"].lower(),color=hurtbox["color"],notes=notes,bone=hurtbox["bone"],frames={"frames": hurtbox["frames"]},hp=hurtbox["hp"],type=hurtbox["type"])
+                hurtboxSQL=Hurtbox(value=move["value"]+"-hurtbox"+index,move=move["value"],color=hurtbox["color"],notes=notes,bone=hurtbox["bone"],frames={"frames": hurtbox["frames"]},hp=hurtbox["hp"],type=hurtbox["type"])
                 db.session.add(hurtboxSQL)
 
 #commit changes

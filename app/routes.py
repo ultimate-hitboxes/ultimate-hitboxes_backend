@@ -1,6 +1,6 @@
 from flask import Flask, redirect, url_for, request, render_template, json
-from app import app
-from app.models import Character,Move,Hitbox,Hurtbox,Grab,Throw
+from app import app, client, db
+from app.models import Character,Move,Hitbox,Hurtbox,Grab,Throw,CharacterLog
 
 @app.route('/')
 def index():
@@ -16,28 +16,22 @@ def getCharacter(character):
 
 @app.route('/api/move/<string:move>', methods=["GET"])
 def getMove(move):
-    print(Move.query.get(move))
     return Move.query.get(move).serialize()
 
-@app.route('/api/images/<string:character>/<string:move>', methods=["GET"])
-def getImages(character, move):
+@app.route('/api/images/<string:move>', methods=["GET"])
+def getImages(move):
 
     if client == None:
         return {"Error": "Error requesting S3 Credentials"}
 
-    data = getCharacterFile(character)
-
-    myMove = None
-    for dataMove in data["moves"]:
-        if dataMove["value"] == move:
-            myMove = dataMove
-            break
+    myMove = Move.query.get(move).serialize()
+    myCharacter = Character.query.get(myMove["character"]).serialize()
 
     if myMove == None:
         return {"Error": "Invalid Move"}
 
     if "frame" in request.args:
-        resp = client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': "frames/"+character+"/"+move+"/"+request.args["frame"]+".png"})
+        resp = client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': "frames/"+myCharacter["number"]+"_"+myMove["character"]+"/"+move+"/"+request.args["frame"]+".png"})
         return resp
     print(request.args)
 
@@ -50,6 +44,13 @@ def getImages(character, move):
         end = int(request.args["endFrame"])
     arr = []
     for i in range(max(1,start), min(int(myMove["faf"])+1, end+1)):
-        arr.append(client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': "frames/"+character+"/"+move+"/"+str(i)+".png"}))
+        arr.append(client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': "frames/"+myCharacter["number"]+"_"+myMove["character"]+"/"+move+"/"+str(i)+".png"}))
     urls = {"urls": arr, "imgCount": len(arr)}
     return urls
+
+@app.route('/api/logs/character/<string:character>', methods=["POST"])
+def writeCharacterLog(character):
+    characterLogSQL=CharacterLog(IP=request.remote_addr,CharacterNum="", CharacterName="",URL="")
+    db.session.add(characterLogSQL)
+    db.session.commit()
+    return {"Message": "Success"}
