@@ -1,6 +1,21 @@
 from app import db
 import datetime
 
+def includeExclude(fields, data, includes,excludes):
+    if includes and excludes:
+        return {"ERROR_MESSAGE": "Can not use both 'include' and 'exclude' options", "ERROR_CODE": 400}
+
+    if includes:
+        for field in fields:
+            if field not in includes:
+                data.pop(field)
+    elif excludes:
+        for field in fields:
+            if field in excludes:
+                data.pop(field)
+
+    return data
+
 class Character(db.Model):
     value=db.Column(db.String(80), primary_key=True)
     name=db.Column(db.String(80))
@@ -15,11 +30,15 @@ class Character(db.Model):
     def __repr__(self):
         return self.name
 
-    def serialize(self):
+    def serialize(self, includes, excludes):
+
+        fields = ["value", "name", "series", "number", "version", "id", "completed", "moves"]
+        
         moves = []
         for move in self.moves:
             moves.append(move.getValue())
-        return { 
+
+        data = { 
             "value": self.value,
             "name": self.name,
             "series": self.series,
@@ -28,6 +47,18 @@ class Character(db.Model):
             "id": self.id,
             "completed": self.completed,
             "moves": moves
+        }
+        
+        return includeExclude(fields,data,includes,excludes)
+    def serialize_basic(self):
+        return { 
+            "value": self.value,
+            "name": self.name,
+            "series": self.series,
+            "number": self.number,
+            "version": self.version,
+            "id": self.id,
+            "completed": self.completed
         }
 
 

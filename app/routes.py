@@ -2,17 +2,30 @@ from flask import Flask, redirect, url_for, request, render_template, json
 from app import app, client, db
 from app.models import Character,Move,Hitbox,Hurtbox,Grab,Throw,CharacterLog
 
+def checkIncludesExcludes(includeExclude):
+    if not includeExclude:
+        return includeExclude
+    else:
+        return includeExclude.split(",")
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/api/characterData', methods=["GET"])
+@app.route('/api/character/all', methods=["GET"])
 def characterData():
-    return Character.query.all()
+    characters = {}
+    for character in Character.query.all():
+        characters[character.value] = character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+    return characters
 
 @app.route('/api/character/<string:character>', methods=["GET"])
 def getCharacter(character):
-    return Character.query.get(character).serialize()
+    data= Character.query.get(character).serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+    if "ERROR_MESSAGE" in data:
+        return data["ERROR_MESSAGE"], data["ERROR_CODE"]
+    return data
 
 @app.route('/api/move/<string:move>', methods=["GET"])
 def getMove(move):
