@@ -37,5 +37,16 @@ class CharacterData(unittest.TestCase):
 
     def test_all_character_data_content(self):
         test_content_type(self, "/api/character/all", "application/json")
+
+class MoveData(unittest.TestCase):
+    def test_move_data_status(self):
+        test_status_code(self, "/api/move/MarioJab1", 200)
+
+    def test_move_data_content(self):
+        test_content_type(self, "/api/move/MarioJab1", "application/json")
+
+class MiscTests(unittest.TestCase):
+    def test_bad_url_code(self):
+        test_status_code(self, "/test", 404)
 if __name__ == "__main__":
     unittest.main()

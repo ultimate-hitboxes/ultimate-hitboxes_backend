@@ -1,6 +1,7 @@
 from app import db
 import json
-from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox;
+from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox,CharacterLog,MoveLog;
+import random
 
 db.reflect()
 db.drop_all()
@@ -16,7 +17,17 @@ for character in data["characters"]:
 
     characterDataFile = open('./data/' + character["number"] + "_" + character["value"] + ".json")
     characterData = json.load(characterDataFile)
+
+    for i in range(0, random.randint(0,1000)):
+        characterLogSQL=CharacterLog(IP="localhost",CharacterNum=character["number"], CharacterName=character["value"],URL="/api/character/"+character["value"])
+        db.session.add(characterLogSQL)
+
+
     for move in characterData["moves"]:
+        for i in range(0, random.randint(0,100)):
+            moveLogSQL=MoveLog(IP="localhost",CharacterNum=character["number"], CharacterName=character["value"], MoveName=move["value"], URL="/api/move/"+move["value"])
+            db.session.add(moveLogSQL)
+
         print (move["value"])
         if "notes" in move:
             moveSQL = Move(value=move["value"], name=move["name"], character=character["value"],faf=move["faf"],frames=move["frames"],notes=move["notes"])

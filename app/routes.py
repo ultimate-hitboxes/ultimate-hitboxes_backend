@@ -35,7 +35,7 @@ def getMove(move):
 def getImages(move):
 
     if client == None:
-        return {"Error": "Error requesting S3 Credentials"}
+        return "Error requesting AWS S3 Credentials", 400
 
     myMove = Move.query.get(move).serialize()
     myCharacter = Character.query.get(myMove["character"]).serialize()
