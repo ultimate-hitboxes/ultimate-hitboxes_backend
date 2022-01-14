@@ -2,10 +2,8 @@ import os
 from app import app
 
 if __name__ == "__main__":
-    if os.environ["Environment"] == "DEVELOPMENT":
-        app.run(debug=True, port=5080)
-    elif os.environ["Environment"] == "PRODUCTION":
-        app.run(port=5443)
+    if os.environ.get("ENV") != "prod":
+        app.run(debug=True, host="0.0.0.0", port=5080)
     else:
-        print("No Environment set")
+        app.run(port=5443, host="0.0.0.0")
     

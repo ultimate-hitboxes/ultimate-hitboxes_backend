@@ -1,4 +1,5 @@
 from flask import Flask, redirect, url_for, request, render_template, json
+
 from app import app, client, db
 from app.models import Character,Move,Hitbox,Hurtbox,Grab,Throw,CharacterLog
 
@@ -15,9 +16,10 @@ def index():
 
 @app.route('/api/character/all', methods=["GET"])
 def characterData():
-    characters = {}
+    characters = {"characterList": []}
     for character in Character.query.all():
         characters[character.value] = character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+        characters["characterList"].append(character.value)
     return characters
 
 @app.route('/api/character/<string:character>', methods=["GET"])
