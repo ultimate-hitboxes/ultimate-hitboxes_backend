@@ -13,7 +13,8 @@ load_dotenv()
 
 #Prevent CORS Errors
 CORS(app)
-if os.environ.get("ENV"):
+
+if os.environ.get("ENV") != "prod":
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 else:
     tunnel = sshtunnel.SSHTunnelForwarder(
@@ -27,7 +28,7 @@ else:
 db = SQLAlchemy(app)
 
 try:
-    client = boto3.client('s3', aws_access_key_id=os.environ["ACCESSKEY"], aws_secret_access_key=os.environ["SECRETKEY"])
+    client = boto3.client('s3', aws_access_key_id=os.environ["ACCESSKEYID"], aws_secret_access_key=os.environ["SECRETACCESSKEY"])
 except KeyError:
     client = None
 

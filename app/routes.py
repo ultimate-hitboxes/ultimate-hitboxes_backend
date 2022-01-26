@@ -1,7 +1,7 @@
 from flask import Flask, redirect, url_for, request, render_template, json
 
 from app import app, client, db
-from app.models import Character,Move,Hitbox,Hurtbox,Grab,Throw,CharacterLog
+from app.models import Character,Move,CharacterLog,MoveLog
 
 def checkIncludesExcludes(includeExclude):
     if not includeExclude:
@@ -16,6 +16,10 @@ def index():
 
 @app.route('/api/character/all', methods=["GET"])
 def characterData():
+
+    if("include" in request.args and "exclude" in request.args):
+        return "Can not use both 'include' and 'exclude' options", 400
+
     characters = {"characterList": []}
     for character in Character.query.all():
         characters[character.value] = character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
@@ -24,11 +28,18 @@ def characterData():
 
 @app.route('/api/character/<string:character>', methods=["GET"])
 def getCharacter(character):
-    data= Character.query.get(character).serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+    dbChar = Character.query.get(character)
+    try:
+        data= dbChar.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+    except AttributeError:
+        return f'{character} is not a valid character', 404
     if "ERROR_MESSAGE" in data:
         return data["ERROR_MESSAGE"], data["ERROR_CODE"]
+
+    writeCharacterLog(request, Character.query.get(character))
     return data
 
+@app.route('/api/move/<string:character>/<string:move>', methods=["GET"])
 @app.route('/api/move/<string:move>', methods=["GET"])
 def getMove(move):
     return Move.query.get(move).serialize()
@@ -40,7 +51,7 @@ def getImages(move):
         return "Error requesting AWS S3 Credentials", 400
 
     myMove = Move.query.get(move).serialize()
-    myCharacter = Character.query.get(myMove["character"]).serialize()
+    myCharacter = Character.query.get(myMove["character"]).serialize(None, None)
 
     if myMove == None:
         return {"Error": "Invalid Move"}
@@ -48,7 +59,6 @@ def getImages(move):
     if "frame" in request.args:
         resp = client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': "frames/"+myCharacter["number"]+"_"+myMove["character"]+"/"+move+"/"+request.args["frame"]+".png"})
         return resp
-    print(request.args)
 
     start = 1
     end = int(myMove["faf"])
@@ -57,15 +67,25 @@ def getImages(move):
         start = int(request.args["startFrame"])
     if "endFrame" in request.args:
         end = int(request.args["endFrame"])
-    arr = []
-    for i in range(max(1,start), min(int(myMove["faf"])+1, end+1)):
-        arr.append(client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': "frames/"+myCharacter["number"]+"_"+myMove["character"]+"/"+move+"/"+str(i)+".png"}))
-    urls = {"urls": arr, "imgCount": len(arr)}
-    return urls
 
-@app.route('/api/logs/character/<string:character>', methods=["POST"])
-def writeCharacterLog(character):
-    characterLogSQL=CharacterLog(IP=request.remote_addr,CharacterNum="", CharacterName="",URL="")
-    db.session.add(characterLogSQL)
+    if start > end:
+        return f'startFrame {start} cannot be greater than endFrame {end}', 400
+    obj={"urls": [],"frames": [], }
+    for i in range(max(1,start), min(int(myMove["faf"])+1, end+1)):
+        obj["frames"].append(i)
+        obj["urls"].append(client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': f'frames/{myCharacter["number"]}_{myMove["character"]}/{move}/{str(i)}.png'}))
+    obj["imgCount"] = len(obj["frames"])
+    return obj
+
+
+def writeCharacterLog(request, character):
+    characterLogSQL=CharacterLog(IP=request.remote_addr, CharacterName=character.value,URL=request.url)
+    writeToDB(characterLogSQL)
+
+def writeMoveLog(request, move):
+    moveLogSQL=MoveLog(IP=request.remote_addr, MoveName=move.value,URL=request.url)
+    writeToDB(moveLogSQL)
+
+def writeToDB(SQL):
+    db.session.add(SQL)
     db.session.commit()
-    return {"Message": "Success"}

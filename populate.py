@@ -19,14 +19,14 @@ for character in data["characters"]:
     characterData = json.load(characterDataFile)
 
     for i in range(0, random.randint(0,1000)):
-        characterLogSQL=CharacterLog(IP="localhost",CharacterNum=character["number"], CharacterName=character["value"],URL="/api/character/"+character["value"])
-        db.session.add(characterLogSQL)
+        characterLogSQL=CharacterLog(IP="localhost",CharacterName=character["value"],URL="/api/character/"+character["value"])
+        #db.session.add(characterLogSQL)
 
 
     for move in characterData["moves"]:
         for i in range(0, random.randint(0,100)):
-            moveLogSQL=MoveLog(IP="localhost",CharacterNum=character["number"], CharacterName=character["value"], MoveName=move["value"], URL="/api/move/"+move["value"])
-            db.session.add(moveLogSQL)
+            moveLogSQL=MoveLog(IP="localhost", MoveName=move["value"], URL="/api/move/"+move["value"])
+            #db.session.add(moveLogSQL)
 
         print (move["value"])
         if "notes" in move:

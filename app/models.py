@@ -111,7 +111,7 @@ class Hitbox(db.Model):
             "value": self.value,
             "move": self.move,
             "data": self.data,
-            "frames": self.frames,
+            "frames": self.frames["frames"],
             "color": self.color,
             "notes": self.notes
         }
@@ -129,7 +129,7 @@ class Grab(db.Model):
             "value": self.value,
             "move": self.move,
             "data": self.data,
-            "frames": self.frames,
+            "frames": self.frames["frames"],
             "color": self.color,
             "notes": self.notes
         }
@@ -147,7 +147,7 @@ class Throw(db.Model):
             "value": self.value,
             "move": self.move,
             "data": self.data,
-            "frames": self.frames,
+            "frames": self.frames["frames"],
             "color": self.color,
             "notes": self.notes
         }
@@ -169,7 +169,7 @@ class Hurtbox(db.Model):
             "bone": self.bone,
             "hp": self.hp,
             "type": self.type,
-            "frames": self.frames,
+            "frames": self.frames["frames"],
             "color": self.color,
             "notes": self.notes
         }
@@ -178,7 +178,6 @@ class CharacterLog(db.Model):
     ID = db.Column(db.Integer, primary_key=True,autoincrement=True)
     DateTime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     IP = db.Column(db.String(80))
-    CharacterNum = db.Column(db.String(80))
     CharacterName = db.Column(db.String(80), db.ForeignKey('character.value'))
     URL = db.Column(db.String(80))
 
@@ -186,7 +185,5 @@ class MoveLog(db.Model):
     ID = db.Column(db.Integer, primary_key=True,autoincrement=True)
     DateTime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     IP = db.Column(db.String(80))
-    CharacterNum = db.Column(db.String(80))
-    CharacterName = db.Column(db.String(80))
     MoveName = db.Column(db.String(80), db.ForeignKey('move.value'))
     URL = db.Column(db.String(80))
