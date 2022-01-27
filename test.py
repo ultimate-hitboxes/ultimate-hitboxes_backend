@@ -4,8 +4,6 @@ import unittest
 import random
 import string
 
-
-
 class TestCase(unittest.TestCase):
     def __init__(self, route, options):
         self.route=route
@@ -46,7 +44,7 @@ class SingleCharacter(unittest.TestCase):
         testcase=TestCase(f'/api/character/{randomString}', "")
         self.assertEquals(testcase.response.status_code, 404)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
-        self.assertEquals(testcase.data, f'{randomString} is not a valid character')
+        self.assertIn(randomString, testcase.data)
     
 class AllCharacter(unittest.TestCase):
     def test_all_character_data(self):
@@ -54,7 +52,7 @@ class AllCharacter(unittest.TestCase):
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
 
-    def test_include_exclude_all_character_status_failure(self):
+    def test_include_exclude_all_character(self):
         testcase=TestCase("/api/character/all", "include=test&exclude=test")
         self.assertEquals(testcase.response.status_code, 400)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
@@ -64,6 +62,19 @@ class MoveData(unittest.TestCase):
         testcase=TestCase("/api/move/MarioJab1", "")
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
+
+    def test_include_exclude_move(self):
+        testcase=TestCase("/api/move/MarioJab1", "include=test&exclude=test")
+        self.assertEquals(testcase.response.status_code, 400)
+        self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
+
+    def test_bad_move(self):
+        letters = string.ascii_lowercase
+        randomString=''.join(random.choice(letters) for i in range(10))
+        testcase=TestCase(f'/api/move/{randomString}', "")
+        self.assertEquals(testcase.response.status_code, 404)
+        self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
+        self.assertIn(randomString, testcase.data)
 
 class Images(unittest.TestCase):
     def test_get_all_images(self):
@@ -110,6 +121,15 @@ class Images(unittest.TestCase):
         testcase=TestCase("/api/images/MarioJab1", "startFrame=15&endFrame=10")
         self.assertEquals(testcase.response.status_code, 400)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
+
+    def test_invalid_move(self):
+        letters = string.ascii_lowercase
+        randomString=''.join(random.choice(letters) for i in range(10))
+        testcase=TestCase(f'/api/images/{randomString}', "")
+        self.assertEquals(testcase.response.status_code, 404)
+        self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
+        self.assertIn(randomString, testcase.data)
+        
 
 class MiscTests(unittest.TestCase):
     def test_bad_url(self):

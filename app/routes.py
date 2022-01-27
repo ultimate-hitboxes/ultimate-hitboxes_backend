@@ -2,6 +2,7 @@ from flask import Flask, redirect, url_for, request, render_template, json
 
 from app import app, client, db
 from app.models import Character,Move,CharacterLog,MoveLog
+from app.get_images import get_images
 
 def checkIncludesExcludes(includeExclude):
     if not includeExclude:
@@ -42,7 +43,15 @@ def getCharacter(character):
 @app.route('/api/move/<string:character>/<string:move>', methods=["GET"])
 @app.route('/api/move/<string:move>', methods=["GET"])
 def getMove(move):
-    return Move.query.get(move).serialize()
+
+    moveObj = Move.query.get(move)
+    if not moveObj:
+        return f'{move} is not a valid move', 404
+    if "include" in request.args and "exclude" in request.args:
+        return "Can not use both 'include' and 'exclude' options", 400
+
+    writeMoveLog(request, moveObj)
+    return moveObj.serialize()
 
 @app.route('/api/images/<string:move>', methods=["GET"])
 def getImages(move):
@@ -50,31 +59,7 @@ def getImages(move):
     if client == None:
         return "Error requesting AWS S3 Credentials", 400
 
-    myMove = Move.query.get(move).serialize()
-    myCharacter = Character.query.get(myMove["character"]).serialize(None, None)
-
-    if myMove == None:
-        return {"Error": "Invalid Move"}
-
-    if "frame" in request.args:
-        resp = client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': "frames/"+myCharacter["number"]+"_"+myMove["character"]+"/"+move+"/"+request.args["frame"]+".png"})
-        return resp
-
-    start = 1
-    end = int(myMove["faf"])
-
-    if "startFrame" in request.args:
-        start = int(request.args["startFrame"])
-    if "endFrame" in request.args:
-        end = int(request.args["endFrame"])
-
-    if start > end:
-        return f'startFrame {start} cannot be greater than endFrame {end}', 400
-    obj={"urls": [],"frames": [], }
-    for i in range(max(1,start), min(int(myMove["faf"])+1, end+1)):
-        obj["frames"].append(i)
-        obj["urls"].append(client.generate_presigned_url('get_object', Params={'Bucket': 'ultimate-hitboxes', 'Key': f'frames/{myCharacter["number"]}_{myMove["character"]}/{move}/{str(i)}.png'}))
-    obj["imgCount"] = len(obj["frames"])
+    obj = get_images(client, move, request)
     return obj
 
 
