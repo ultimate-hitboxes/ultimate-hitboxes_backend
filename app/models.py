@@ -225,7 +225,13 @@ class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     datetime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     ip = db.Column(db.String(80))
-    endpoint = db.Column(db.String(80))
-    resource = db.Column(db.String(80))
     url = db.Column(db.String(80))
     username = db.Column(db.String(80), db.ForeignKey('APIUser.username'))
+
+
+class Confirmation(db.Model):
+    id = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    email = db.Column(db.String(80))
+    sent_on = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    confirmed_on = db.Column(db.DateTime)
+    expires_at = db.Column(db.DateTime)
