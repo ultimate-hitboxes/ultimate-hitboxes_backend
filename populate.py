@@ -1,6 +1,6 @@
 from app import db
 import json
-from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox,CharacterLog,MoveLog;
+from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox,CharacterLog,MoveLog, Log, APIUser;
 import random
 
 db.reflect()
@@ -28,11 +28,11 @@ for character in data["characters"]:
             moveLogSQL=MoveLog(IP="localhost", MoveName=move["value"], URL="/api/move/"+move["value"])
             #db.session.add(moveLogSQL)
 
-        print (move["value"])
-        if "notes" in move:
-            moveSQL = Move(value=move["value"], name=move["name"], character=character["value"],faf=move["faf"],frames=move["frames"],notes=move["notes"])
+        if "complete" not in move:
+            complete = True
         else:
-            moveSQL = Move(value=move["value"], name=move["name"], character=character["value"],faf=move["faf"],frames=move["frames"])
+            complete = False
+        moveSQL = Move(value=move["value"], name=move["name"], character=character["value"],faf=move["faf"],frames=move["frames"],notes=move.get("notes"), completed=complete)
         db.session.add(moveSQL)
 
 

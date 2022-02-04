@@ -50,16 +50,24 @@ class Character(db.Model):
         }
         
         return includeExclude(fields,data,includes,excludes)
-    def serialize_basic(self):
-        return { 
+    def serialize_extra_move_data(self):
+        moves = []
+        for move in self.moves:
+            moveObj = {"name": move.getName(), "value": move.getValue(), "completed": move.getCompleted()}
+            moves.append(moveObj)
+
+        data = { 
             "value": self.value,
             "name": self.name,
             "series": self.series,
             "number": self.number,
             "version": self.version,
             "id": self.id,
-            "completed": self.completed
+            "completed": self.completed,
+            "moves": moves
         }
+        
+        return data
 
 
 class Move(db.Model):
@@ -69,6 +77,7 @@ class Move(db.Model):
     frames=db.Column(db.Integer)
     faf=db.Column(db.Integer)
     notes=db.Column(db.String(200))
+    completed=db.Column(db.Boolean)
     hitboxes=db.relationship('Hitbox', backref="Move", lazy=True)
     hurtboxes=db.relationship('Hurtbox', backref="Move", lazy=True)
     grabs=db.relationship('Grab', backref="Move", lazy=True)
@@ -87,16 +96,25 @@ class Move(db.Model):
             "frames": self.frames,
             "faf": self.faf,
             "notes": self.notes,
+            "completed": self.completed,
             "hitboxes": [hitbox.serialize() for hitbox in self.hitboxes],
             "hurtboxes": [hurtbox.serialize() for hurtbox in self.hurtboxes],
             "grabs": [grab.serialize() for grab in self.grabs],
             "throws": [throw.serialize() for throw in self.throws]
         }
 
+        dataTypes = ["hitboxes", "hurtboxes", "grabs", "throws"]
+        for type in dataTypes:
+            if len(moveData[type]) == 0:
+                moveData.pop(type, None)
         return moveData
         
     def getValue(self):
         return self.value
+    def getName(self):
+        return self.name
+    def getCompleted(self):
+        return self.completed
 
 class Hitbox(db.Model):
     value=db.Column(db.String(80), primary_key=True)
@@ -187,3 +205,27 @@ class MoveLog(db.Model):
     IP = db.Column(db.String(80))
     MoveName = db.Column(db.String(80), db.ForeignKey('move.value'))
     URL = db.Column(db.String(80))
+
+
+
+class APIUser(db.Model):
+    id = db.Column(db.Integer,autoincrement=True, primary_key=True)
+    username = db.Column(db.String(20))
+    email = db.Column(db.String(80), unique=True)
+    hashed_password = db.Column(db.String(256))
+    apikey = db.Column(db.String(20), unique=True)
+    usertype = db.Column(db.String(20))
+    active = db.Column(db.Boolean, default=False)
+    authenticated=db.Column(db.Boolean, default=False)
+    logs=db.relationship('Log', backref="APIUser",lazy=True)
+
+    __tablename__= "APIUser"
+
+class Log(db.Model):
+    id = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    datetime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    ip = db.Column(db.String(80))
+    endpoint = db.Column(db.String(80))
+    resource = db.Column(db.String(80))
+    url = db.Column(db.String(80))
+    username = db.Column(db.String(80), db.ForeignKey('APIUser.username'))

@@ -6,4 +6,4 @@ if __name__ == "__main__":
     if os.environ.get("ENV") != "prod":
         app.run(port=5080, host="0.0.0.0", debug=True)
     else:
-        app.run(port=5443, host="0.0.0.0")
+        app.run(port=5443, host="0.0.0.0", ssl_context=(os.environ.get("CERT"), os.environ.get("KEY")))
