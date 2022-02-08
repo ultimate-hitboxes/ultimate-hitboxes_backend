@@ -1,5 +1,6 @@
 from app import db
 import datetime
+from sqlalchemy import func
 
 def includeExclude(fields, data, includes,excludes):
     if includes and excludes:
@@ -208,29 +209,45 @@ class MoveLog(db.Model):
 
 
 
-class APIUser(db.Model):
+class User(db.Model):
     id = db.Column(db.Integer,autoincrement=True, primary_key=True)
     username = db.Column(db.String(20))
     email = db.Column(db.String(80), unique=True)
     hashed_password = db.Column(db.String(256))
     apikey = db.Column(db.String(20), unique=True)
     usertype = db.Column(db.String(20))
-    active = db.Column(db.Boolean, default=False)
+    active = db.Column(db.Boolean, default=True)
     authenticated=db.Column(db.Boolean, default=False)
-    logs=db.relationship('Log', backref="APIUser",lazy=True)
+    logs=db.relationship('Log', backref="user",lazy=True)
 
-    __tablename__= "APIUser"
+    def __repr__(self):
+        return self.username
 
+    def verify_password(self, password):
+        return sha256_crypt.verify(password, self.hashed_password)
+    
+    def is_active(self):
+        return self.active
+
+    def get_id(self):
+        return self.id
+
+    def is_authenticated(self):
+        return self.authenticated
+
+    def get_user_by_username_or_email(value):
+        return User.query.filter((func.lower(User.email) == value.lower()) | (func.lower(User.username) == value.lower())).first()
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     datetime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     ip = db.Column(db.String(80))
     url = db.Column(db.String(80))
-    username = db.Column(db.String(80), db.ForeignKey('APIUser.username'))
+    username = db.Column(db.String(80), db.ForeignKey('user.username'))
 
 
 class Confirmation(db.Model):
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    confirmation_code=db.Column(db.String(16))
     email = db.Column(db.String(80))
     sent_on = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     confirmed_on = db.Column(db.DateTime)

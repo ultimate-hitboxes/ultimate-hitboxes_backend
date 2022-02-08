@@ -1,42 +1,28 @@
 from flask import Flask, redirect, url_for, request, render_template, json
 from passlib.hash import sha256_crypt
-from itsdangerous.url_safe import URLSafeTimedSerializer
 
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 import secrets
-import math, os
-
-import random
-
-import smtplib, ssl
 
 from app import app, client, db
-from app.models import Character,Move,CharacterLog,MoveLog, Log, APIUser
+from app.models import Character,Move,CharacterLog, Log, User, Confirmation
 from app.get_images import get_images
+from app.confirmation_email import send_confirmation_email, generate_confirmation_code
 
-import smtplib, ssl
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
 
-def send_confirmation_email(receiver_email):
-    context = ssl.create_default_context()
-    port=465
-    sender_email="ultimatehitboxes@gmail.com"
-    password=os.environ.get("EMAIL_PW")
-    with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-        server.login(sender_email, password)
-        server.sendmail(sender_email, receiver_email, "message")
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
+
 
 def generate_key():
     generated_key = secrets.token_urlsafe(32)
     print(generated_key)
     return generated_key
 
-def generate_confirmation_code():
-    string = '0123456789'
-    confirmation_code = ""
-    length = len(string)
-    for i in range(6) :
-        confirmation_code += string[math.floor(random.random() * length)]
- 
-    return confirmation_code
 
 def hash_password(password):
     return sha256_crypt.encrypt(password)
@@ -56,28 +42,61 @@ def index():
 def register():
     if request.method == "POST":
         print(request.form)
-        userSQL=APIUser(username=request.form["username"], email=request.form["email"],hashed_password=sha256_crypt.encrypt(request.form["password"]), apikey=generate_key(), usertype="user")
+        userSQL=User(username=request.form["username"], email=request.form["email"],hashed_password=sha256_crypt.encrypt(request.form["password"]), apikey=generate_key(), usertype="user")
         
-        writeToDB(userSQL)
-        send_confirmation_email(request.form["email"])
-    return render_template('register.html')
+        writeToDB([userSQL])
+        confirmation_code=generate_confirmation_code()
+        confirmationCodeSQL=Confirmation(email=request.form["email"], confirmation_code=confirmation_code)
+        send_confirmation_email(request.form["email"], confirmation_code, request.form["username"])
+        writeToDB([confirmationCodeSQL])
+        return redirect(url_for('account'))
+    else:
+        return render_template('register.html')
 
-@app.route('/confirmation', methods=["GET"])
-def confirmation():
-    code=generate_confirmation_code()
-    return {"code":code}
+@app.route('/account', methods=["GET", "POST"])
+@login_required
+def account():
+    if request.method == "GET":
+        if(current_user.authenticated):
+            return render_template('account.html', user=current_user)
+        else:
+            return render_template('account_confirmation.html')
+    if request.method == "POST":
+        codes = Confirmation.query.filter(Confirmation.email==current_user.email).all()
+        for code in codes:
+            if(code.confirmation_code==request.form["confirmation_code"]):
+                current_user.authenticated=True
+                db.session.commit()
+                return render_template('account.html', user=current_user)
+        return render_template('account_confirmation.html')
+
+@app.route('/new_apikey', methods=["POST"])
+@login_required
+def new_apikey():
+    new_key = generate_key()
+    current_user.apikey=new_key
+    db.session.commit()
+    return render_template('account.html')
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        dbUser = APIUser.query.get(request.form["username"])
-        if sha256_crypt.verify(request.form["password"], dbUser.hashed_password):
+        user = User.get_user_by_username_or_email(request.form["username"])
+        print(user)
+        if sha256_crypt.verify(request.form["password"], user.hashed_password):
             print("Verified")
         else:
             print("Invalid PW")
-        return render_template('login.html')
+        login_user(user)
+        return redirect(url_for('account'))
     else:
         return render_template('login.html')
+
+@app.route('/logout', methods=["GET", "POST"])
+def logout():
+    logout_user()
+    return render_template('index.html')
+
 
 @app.route('/api/character/all', methods=["GET"])
 def characterData():
@@ -134,24 +153,16 @@ def getImages(move):
     return obj
 
 def writeLog(request):
-    user=APIUser.query.filter(APIUser.apikey==request.headers['API-Key']).first()
+    user=User.query.filter(User.apikey==request.headers['API-Key']).first()
 
     if(not user):
         log = Log(ip=request.remote_addr, url=request.url)
     else:
         log = Log(ip=request.remote_addr, url=request.url, username=user.username)
     
-    writeToDB(log)
-
-def writeCharacterLog(request, character):
-    
-    characterLogSQL=CharacterLog(IP=request.remote_addr, CharacterName=character.value,URL=request.url)
-    writeToDB(characterLogSQL)
-
-def writeMoveLog(request, move):
-    moveLogSQL=MoveLog(IP=request.remote_addr, MoveName=move.value,URL=request.url)
-    writeToDB(moveLogSQL)
+    writeToDB([log])
 
 def writeToDB(SQL):
-    db.session.add(SQL)
+    for statement in SQL:
+        db.session.add(statement)
     db.session.commit()

@@ -1,6 +1,6 @@
 from app import db
 import json
-from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox,CharacterLog,MoveLog, Log, APIUser;
+from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox,CharacterLog,MoveLog, Log, User;
 import random
 
 db.reflect()
