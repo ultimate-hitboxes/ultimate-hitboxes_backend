@@ -3,6 +3,9 @@ import os
 import math
 import random
 
+from app import db
+from app.models import Confirmation
+
 def send_confirmation_email(receiver_email, confirmation_code, username):
     message=f'Hello {username},\n\n\
 Your account on Ultimate-Hitboxes was successfully created. Use the below code to activate your account.\n\n\
@@ -25,3 +28,10 @@ def generate_confirmation_code():
         confirmation_code += string[math.floor(random.random() * length)]
  
     return confirmation_code
+
+def set_confirmation_code(email, username):
+    confirmation_code=generate_confirmation_code()
+    confirmationCodeSQL=Confirmation(email=email, confirmation_code=confirmation_code)
+    send_confirmation_email(email, confirmation_code, username)
+    db.session.add(confirmationCodeSQL)
+    db.session.commit()

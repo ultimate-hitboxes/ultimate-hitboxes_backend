@@ -251,4 +251,4 @@ class Confirmation(db.Model):
     email = db.Column(db.String(80))
     sent_on = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     confirmed_on = db.Column(db.DateTime)
-    expires_at = db.Column(db.DateTime)
+    expires_at = db.Column(db.DateTime, default=datetime.datetime.utcnow()+datetime.timedelta(hours=24))
