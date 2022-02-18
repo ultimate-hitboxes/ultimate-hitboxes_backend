@@ -2,6 +2,7 @@ from app import db
 import json
 from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox,CharacterLog,MoveLog, Log, User;
 import random
+import os
 
 db.reflect()
 db.drop_all()
@@ -12,6 +13,8 @@ dataFile=open('./data/characterData.json')
 data = json.load(dataFile)
 
 for character in data["characters"]:
+    if(character["value"] != "mario" and os.environ.get('FLASK_ENV')=="test"):
+        break
     charSQL = Character(value=character["value"], name=character["name"],series=character["series"],number=character["number"],version=character["version"],id=character["id"],completed=character["completed"])
     db.session.add(charSQL)
 
