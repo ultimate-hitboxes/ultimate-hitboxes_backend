@@ -54,4 +54,4 @@ try:
 except KeyError:
     client = None
 
-from app import routes, user_route_methods
+from app import routes
