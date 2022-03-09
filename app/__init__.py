@@ -38,10 +38,8 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ultimate_hitboxes'
     app.config['SQLALCHEMY_BINDS'] = {
         'db_old': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ulthit_logs',
-        #'db_new': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ultimate_hitboxes'
-        'ultimate-hitboxes': f'sqlite:///dbs/{os.environ.get("FLASK_ENV")}.db',
-        #'logs': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/logs'
-        'logs': f'sqlite:///dbs/logs.db'
+        'ultimate-hitboxes': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ultimate-hitboxes',
+        'logs': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/logs'
     }
     print(app.config['SQLALCHEMY_BINDS'])
 
