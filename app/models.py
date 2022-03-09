@@ -18,6 +18,7 @@ def includeExclude(fields, data, includes,excludes):
     return data
 
 class Character(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
     value=db.Column(db.String(80), primary_key=True)
     name=db.Column(db.String(80))
     series=db.Column(db.String(80))
@@ -26,7 +27,7 @@ class Character(db.Model):
     id = db.Column(db.Integer)
     completed = db.Column(db.Boolean)
     moves = db.relationship('Move', backref="Character", lazy=True)
-    logs=db.relationship('CharacterLog', backref="Character",lazy=True)
+    popularity = db.relationship('CharacterPopularity', backref="Character", lazy=True)
 
     def __repr__(self):
         return self.name
@@ -72,6 +73,7 @@ class Character(db.Model):
 
 
 class Move(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
     value=db.Column(db.String(80), primary_key=True)
     name=db.Column(db.String(80))
     character=db.Column(db.String(80), db.ForeignKey('character.value'))
@@ -83,7 +85,7 @@ class Move(db.Model):
     hurtboxes=db.relationship('Hurtbox', backref="Move", lazy=True)
     grabs=db.relationship('Grab', backref="Move", lazy=True)
     throws=db.relationship('Throw', backref="Move", lazy=True)
-    logs=db.relationship('MoveLog', backref="Move",lazy=True)
+    #logs=db.relationship('MoveLog', backref="Move",lazy=True)
 
     #def __repr__(self):
     #    return self.name
@@ -118,6 +120,7 @@ class Move(db.Model):
         return self.completed
 
 class Hitbox(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
     value=db.Column(db.String(80), primary_key=True)
     move=db.Column(db.String(80), db.ForeignKey('move.value'))
     color=db.Column(db.String(80))
@@ -136,6 +139,7 @@ class Hitbox(db.Model):
         }
 
 class Grab(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
     value=db.Column(db.String(80), primary_key=True)
     move=db.Column(db.String(80), db.ForeignKey('move.value'))
     color=db.Column(db.String(80))
@@ -154,6 +158,7 @@ class Grab(db.Model):
         }
 
 class Throw(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
     value=db.Column(db.String(80), primary_key=True)
     move=db.Column(db.String(80), db.ForeignKey('move.value'))
     color=db.Column(db.String(80))
@@ -172,6 +177,7 @@ class Throw(db.Model):
         }
 
 class Hurtbox(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
     value=db.Column(db.String(80), primary_key=True)
     move=db.Column(db.String(80), db.ForeignKey('move.value'))
     color=db.Column(db.String(80))
@@ -193,29 +199,37 @@ class Hurtbox(db.Model):
             "notes": self.notes
         }
 
-class CharacterLog(db.Model):
+class CharacterLogs_production(db.Model):
+    __tablename__="CharacterLogs_production"
+    __bind_key__ ="db_old"
     ID = db.Column(db.Integer, primary_key=True,autoincrement=True)
     DateTime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    IP = db.Column(db.String(80))
-    CharacterName = db.Column(db.String(80), db.ForeignKey('character.value'))
-    URL = db.Column(db.String(80))
+    IP = db.Column(db.String(255))
+    CharacterName = db.Column(db.String(255))
+    CharacterName = db.Column(db.String(255))
+    URL = db.Column(db.String(255))
 
-class MoveLog(db.Model):
+class MoveLogs_production(db.Model):
+    __tablename__="MoveLogs_production"
+    __bind_key__ ="db_old"
     ID = db.Column(db.Integer, primary_key=True,autoincrement=True)
     DateTime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    IP = db.Column(db.String(80))
-    MoveName = db.Column(db.String(80), db.ForeignKey('move.value'))
-    URL = db.Column(db.String(80))
+    IP = db.Column(db.String(255))
+    CharacterName = db.Column(db.String(255))
+    CharacterName = db.Column(db.String(255))
+    MoveName = db.Column(db.String(255), db.ForeignKey('move.value'))
+    URL = db.Column(db.String(255))
 
 
 
 class User(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
     id = db.Column(db.Integer,autoincrement=True, primary_key=True)
     username = db.Column(db.String(20))
     email = db.Column(db.String(80), unique=True)
     hashed_password = db.Column(db.String(256))
     apikey = db.Column(db.String(20), unique=True)
-    usertype = db.Column(db.String(20))
+    usertype = db.Column(db.String(20), default="user")
     active = db.Column(db.Boolean, default=True)
     authenticated=db.Column(db.Boolean, default=False)
     logs=db.relationship('Log', backref="user",lazy=True)
@@ -238,14 +252,24 @@ class User(db.Model):
     def get_user_by_username_or_email(value):
         return User.query.filter((func.lower(User.email) == value.lower()) | (func.lower(User.username) == value.lower())).first()
 class Log(db.Model):
+    __bind_key__ ="logs"
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     datetime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     ip = db.Column(db.String(80))
-    url = db.Column(db.String(80))
+    endpoint=db.Column(db.String(80))
+    resource = db.Column(db.String(80))
     username = db.Column(db.String(80), db.ForeignKey('user.username'))
+
+class CharacterPopularity(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
+    id = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    value=db.Column(db.String(80), db.ForeignKey('character.value'))
+    username = db.Column(db.String(80), db.ForeignKey('user.username'))
+    count=db.Column(db.Integer, default=0)
 
 
 class Confirmation(db.Model):
+    __bind_key__ ="ultimate-hitboxes"
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     confirmation_code=db.Column(db.String(16))
     email = db.Column(db.String(80))

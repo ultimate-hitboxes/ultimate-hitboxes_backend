@@ -43,6 +43,7 @@ def register():
                 flash(error)
         else:
             userSQL=User(username=request.form["username"], email=request.form["email"],hashed_password=sha256_crypt.encrypt(request.form["password"]), apikey=generate_key(), usertype="user")
+            print(userSQL.hashed_password)
             try:
                 db.session.add(userSQL)
                 db.session.commit()

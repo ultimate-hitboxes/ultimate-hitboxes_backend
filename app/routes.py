@@ -1,8 +1,9 @@
-from flask import Flask, flash, redirect, url_for, request, render_template
+from flask import request
 
 from app import app, client, db
-from app.models import Character,Move,CharacterLog, Log, User, Confirmation
+from app.models import Character,Move, Log, User,CharacterPopularity
 from app.get_images import get_images
+from sqlalchemy import func
 
 def checkIncludesExcludes(includeExclude):
     if not includeExclude:
@@ -14,20 +15,23 @@ def checkIncludesExcludes(includeExclude):
 @app.route('/api/character/all', methods=["GET"])
 def characterData():
 
+    response = {}
     if("include" in request.args and "exclude" in request.args):
         return "Can not use both 'include' and 'exclude' options", 400
 
-    characters = {}
-    for character in Character.query.all():
-        characters[character.value] = character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
-        characters[character.value]["count"] = CharacterLog.query.filter(CharacterLog.CharacterName==character.value).count()
 
-    writeLog(request)
-    return characters
+    user=User.query.filter(User.apikey==request.headers.get('API-Key')).first()
+    
+    for character in Character.query.all():
+        response[character.value] = character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+        if user:
+            response[character.value]["count"] = db.session.query(CharacterPopularity).filter(CharacterPopularity.value==character.value, CharacterPopularity.username==user.username).first().count
+    writeLog(request, '/api/character/all', None)
+    return response
 
 @app.route('/api/character/<string:character>', methods=["GET"])
 def getCharacter(character):
-    dbChar = Character.query.get(character)
+    dbChar = Character.query.get(character.lower())
     try:
         if request.args.get("extra"):
             data= dbChar.serialize_extra_move_data()
@@ -38,14 +42,18 @@ def getCharacter(character):
     if "ERROR_MESSAGE" in data:
         return data["ERROR_MESSAGE"], data["ERROR_CODE"]
 
-    writeLog(request)
+    writeLog(request, '/api/character/', character)
+
+    if request.headers.get('API-Key'):
+        updatePopularity(request, character)
+
     return data
 
 @app.route('/api/move/<string:move>', methods=["GET"])
 def getMove(move):
 
     try:
-        moveData = Move.query.get(move).serialize()
+        moveData=Move.query.filter(func.lower(Move.value) == func.lower(move)).first().serialize()
     except AttributeError:
         return f'{move} is not a valid move', 404
         
@@ -54,7 +62,7 @@ def getMove(move):
 
     if request.args.get("images"):
         moveData["imgData"] = get_images(client, move, request)
-    writeLog(request)
+    writeLog(request, '/api/move/', move)
     return moveData
 
 
@@ -66,19 +74,42 @@ def getImages(move):
         return "Error requesting AWS S3 Credentials", 400
 
     obj = get_images(client, move, request)
-    writeLog(request)
+    writeLog(request, '/api/images/', move)
     return obj
 
-def writeLog(request):
-    print("here")
+def writeLog(request, endpoint, resource):
     user=User.query.filter(User.apikey==request.headers.get('API-Key')).first()
 
     if(not user):
-        log = Log(ip=request.remote_addr, url=request.url)
+        log = Log(ip=request.remote_addr, endpoint=endpoint, resource=resource)
     else:
-        log = Log(ip=request.remote_addr, url=request.url, username=user.username)
+        log = Log(ip=request.remote_addr, endpoint=endpoint, resource=resource, username=user.username)
     
     writeToDB([log])
+
+def updatePopularity(request, resource):
+
+    #Figure out the User
+    user=User.query.filter(User.apikey==request.headers.get('API-Key')).first()
+
+    #This user does not exist, return
+    if not user:
+        return
+
+    #Find the entry to update
+    entry = db.session.query(CharacterPopularity).filter(CharacterPopularity.value==resource, CharacterPopularity.username==user.username).first()
+
+    #Entry exists, increment count by one
+    if entry:
+        entry.count += 1
+
+    #Entry does not exist, add an entry for that user/resource combination, set count to 1
+    else:
+        log = CharacterPopularity(value=resource, username=user.username, count=1)
+        db.session.add(log)
+
+    #Commit changes to Database
+    db.session.commit()
 
 def writeToDB(SQL):
     for statement in SQL:
