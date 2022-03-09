@@ -221,7 +221,7 @@ class MoveLogs_production(db.Model):
     URL = db.Column(db.String(255))
 
 
-
+#User
 class User(db.Model):
     __bind_key__ ="ultimate-hitboxes"
     id = db.Column(db.Integer,autoincrement=True, primary_key=True)
