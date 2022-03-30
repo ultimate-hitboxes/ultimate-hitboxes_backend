@@ -35,10 +35,6 @@ class Character(db.Model):
     def serialize(self, includes, excludes):
 
         fields = ["value", "name", "series", "number", "version", "id", "completed", "moves"]
-        
-        moves = []
-        for move in self.moves:
-            moves.append(move.getValue())
 
         data = { 
             "value": self.value,
@@ -47,9 +43,17 @@ class Character(db.Model):
             "number": self.number,
             "version": self.version,
             "id": self.id,
-            "completed": self.completed,
-            "moves": moves
+            "completed": self.completed
         }
+        
+        if excludes is None or "moves" not in excludes:   
+            moves = []
+            for move in self.moves:
+                moves.append(move.getValue())
+            data["moves"] = moves
+        else:
+            fields.remove("moves")
+        
         
         return includeExclude(fields,data,includes,excludes)
     def serialize_extra_move_data(self):

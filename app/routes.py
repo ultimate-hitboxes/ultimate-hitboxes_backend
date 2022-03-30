@@ -5,11 +5,6 @@ from app.models import Character,Move, Log, User,CharacterPopularity
 from app.get_images import get_images
 from sqlalchemy import func
 
-# characterFiles = {
-#     "mario": "01_mario.json",
-#     "donkey-kong": "02_donkey-kong.json",
-#     "link": "03_link.json"
-# }
 def checkIncludesExcludes(includeExclude):
     if not includeExclude:
         return includeExclude

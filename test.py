@@ -5,15 +5,16 @@ import random
 import string
 
 class TestCase(unittest.TestCase):
-    def __init__(self, route, options):
+    def __init__(self, route, options, headers):
         self.route=route
         self.options=options
-        self.response=self.get_response(f'{route}?{options}')
+        self.headers=headers
+        self.response=self.get_response()
         self.data=self.response.get_data().decode("utf-8")
 
-    def get_response(self, route):
+    def get_response(self):
         tester=app.test_client(self)
-        response=tester.get(route)
+        response=tester.get(f'{self.route}?{self.options}', headers=self.headers)
         return response
 
     def get_json_data(self):
@@ -29,56 +30,57 @@ class Index(unittest.TestCase):
 
 class SingleCharacter(unittest.TestCase):
     def test_good_character(self):
-        testcase=TestCase("/api/character/mario", "")
+        testcase=TestCase("/api/character/mario", "", {})
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
 
     def test_include_exclude_character_status_failure(self):
-        testcase=TestCase("/api/character/mario", "include=test&exclude=test")
+        testcase=TestCase("/api/character/mario", "include=test&exclude=test", {})
         self.assertEquals(testcase.response.status_code, 400)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
 
     def test_bad_character(self):
         letters = string.ascii_lowercase
         randomString=''.join(random.choice(letters) for i in range(10))
-        testcase=TestCase(f'/api/character/{randomString}', "")
+        testcase=TestCase(f'/api/character/{randomString}', "", {})
         self.assertEquals(testcase.response.status_code, 404)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
         self.assertIn(randomString, testcase.data)
     
 class AllCharacter(unittest.TestCase):
     def test_all_character_data(self):
-        testcase=TestCase("/api/character/all", "")
+        testcase=TestCase("/api/character/all", "", {})
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
+        self.assertEquals(testcase.response)
 
     def test_include_exclude_all_character(self):
-        testcase=TestCase("/api/character/all", "include=test&exclude=test")
+        testcase=TestCase("/api/character/all", "include=test&exclude=test", {})
         self.assertEquals(testcase.response.status_code, 400)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
 
 class MoveData(unittest.TestCase):
     def test_move_data(self):
-        testcase=TestCase("/api/move/MarioJab1", "")
+        testcase=TestCase("/api/move/MarioJab1", "", {})
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
 
     def test_include_exclude_move(self):
-        testcase=TestCase("/api/move/MarioJab1", "include=test&exclude=test")
+        testcase=TestCase("/api/move/MarioJab1", "include=test&exclude=test", {})
         self.assertEquals(testcase.response.status_code, 400)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
 
     def test_bad_move(self):
         letters = string.ascii_lowercase
         randomString=''.join(random.choice(letters) for i in range(10))
-        testcase=TestCase(f'/api/move/{randomString}', "")
+        testcase=TestCase(f'/api/move/{randomString}', "", {})
         self.assertEquals(testcase.response.status_code, 404)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
         self.assertIn(randomString, testcase.data)
 
 class Images(unittest.TestCase):
     def test_get_all_images(self):
-        testcase=TestCase("/api/images/MarioJab1", "")
+        testcase=TestCase("/api/images/MarioJab1", "", {})
         testcase.get_json_data()
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
@@ -86,13 +88,13 @@ class Images(unittest.TestCase):
     
     def test_single_frame(self):
         randFrame=random.randrange(2,9)
-        testcase=TestCase("/api/images/MarioJab1", f'frame={randFrame}')
+        testcase=TestCase("/api/images/MarioJab1", f'frame={randFrame}', {})
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
         self.assertIn(f'https://ultimate-hitboxes.s3.amazonaws.com/frames/01_mario/MarioJab1/{randFrame}.png', testcase.data)
 
     def test_start_frame(self):
-        testcase=TestCase("/api/images/MarioJab1", "startFrame=5")
+        testcase=TestCase("/api/images/MarioJab1", "startFrame=5", {})
         testcase.get_json_data()
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
@@ -100,7 +102,7 @@ class Images(unittest.TestCase):
         self.assertEquals(testcase.json_data["frames"][0], 5)
 
     def test_end_frame(self):
-        testcase=TestCase("/api/images/MarioJab1", "endFrame=10")
+        testcase=TestCase("/api/images/MarioJab1", "endFrame=10", {})
         testcase.get_json_data()
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
@@ -109,7 +111,7 @@ class Images(unittest.TestCase):
         self.assertEquals(testcase.json_data["frames"][-1], 10)
 
     def test_start_end_frame(self):
-        testcase=TestCase("/api/images/MarioJab1", "startFrame=5&endFrame=10")
+        testcase=TestCase("/api/images/MarioJab1", "startFrame=5&endFrame=10", {})
         testcase.get_json_data()
         self.assertEquals(testcase.response.status_code, 200)
         self.assertEquals(testcase.response.content_type, "application/json")
@@ -118,14 +120,14 @@ class Images(unittest.TestCase):
         self.assertEquals(testcase.json_data["frames"][-1], 10)
 
     def test_start_larger_end_frame(self):
-        testcase=TestCase("/api/images/MarioJab1", "startFrame=15&endFrame=10")
+        testcase=TestCase("/api/images/MarioJab1", "startFrame=15&endFrame=10", {})
         self.assertEquals(testcase.response.status_code, 400)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
 
     def test_invalid_move(self):
         letters = string.ascii_lowercase
         randomString=''.join(random.choice(letters) for i in range(10))
-        testcase=TestCase(f'/api/images/{randomString}', "")
+        testcase=TestCase(f'/api/images/{randomString}', "", {})
         self.assertEquals(testcase.response.status_code, 404)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
         self.assertIn(randomString, testcase.data)
@@ -133,7 +135,7 @@ class Images(unittest.TestCase):
 
 class MiscTests(unittest.TestCase):
     def test_bad_url(self):
-        testcase=TestCase("/test", "")
+        testcase=TestCase("/test", "", {})
         self.assertEquals(testcase.response.status_code, 404)
         self.assertEquals(testcase.response.content_type, "text/html; charset=utf-8")
 
