@@ -18,30 +18,31 @@ CORS(app)
 #Set the Secret Key
 app.config['SECRET_KEY'] = os.environ["SECRET_KEY"]
 
-#In Development use a local SQL Lite DB
-if os.environ.get("FLASK_ENV") != "production":
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///dbs/{os.environ.get("FLASK_ENV")}.db'
-    app.config['SQLALCHEMY_BINDS'] = {
-        'ultimate-hitboxes': f'sqlite:///dbs/{os.environ.get("FLASK_ENV")}.db',
-        'logs': f'sqlite:///dbs/logs.db'
-    }
-
-#In Production, connect to an AWS MySQL DB through an SSH Tunnel
-else:
-    tunnel = sshtunnel.SSHTunnelForwarder(
+tunnel = sshtunnel.SSHTunnelForwarder(
         (os.environ["SSH_SERVER"]), 
         ssh_username=os.environ["SSH_USER"], 
         ssh_pkey=os.environ["SSH_KEY"], 
         remote_bind_address=(os.environ["PROD_DB_HOST"], 3306)
     )
-    tunnel.start()
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ultimate_hitboxes'
+tunnel.start()
+
+#In Development use a local SQL Lite DB
+if os.environ.get("DB_ENV") != "production":
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///dbs/{os.environ.get("DB_ENV")}.db'
     app.config['SQLALCHEMY_BINDS'] = {
         'db_old': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ulthit_logs',
-        'ultimate-hitboxes': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ultimate-hitboxes',
+        'ultimate-hitboxes': f'sqlite:///dbs/{os.environ.get("DB_ENV")}.db',
+        'logs': f'sqlite:///dbs/logs.db'
+    }
+
+#In Production, connect to an AWS MySQL DB through an SSH Tunnel
+else:
+    #app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ultimate_hitboxes'
+    app.config['SQLALCHEMY_BINDS'] = {
+        'db_old': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ulthit_logs',
+        'ultimate-hitboxes':  f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/ultimate-hitboxes',
         'logs': f'mysql://{os.environ["PROD_DB_USER"]}:{os.environ["PROD_DB_PW"]}@127.0.0.1:{tunnel.local_bind_port}/logs'
     }
-    print(app.config['SQLALCHEMY_BINDS'])
 
 #Set up access to the database through SQL Alchemy
 db = SQLAlchemy(app)

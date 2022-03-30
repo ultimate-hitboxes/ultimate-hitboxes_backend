@@ -5,6 +5,11 @@ from app.models import Character,Move, Log, User,CharacterPopularity
 from app.get_images import get_images
 from sqlalchemy import func
 
+# characterFiles = {
+#     "mario": "01_mario.json",
+#     "donkey-kong": "02_donkey-kong.json",
+#     "link": "03_link.json"
+# }
 def checkIncludesExcludes(includeExclude):
     if not includeExclude:
         return includeExclude
@@ -21,11 +26,15 @@ def characterData():
 
 
     user=User.query.filter(User.apikey==request.headers.get('API-Key')).first()
-    
-    for character in Character.query.all():
-        response[character.value] = character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
-        if user:
-            response[character.value]["count"] = db.session.query(CharacterPopularity).filter(CharacterPopularity.value==character.value, CharacterPopularity.username==user.username).first().count
+    if user:
+        objs = db.session.query(Character,CharacterPopularity).join(CharacterPopularity).filter(CharacterPopularity.username==user.username).all()
+        for obj in objs:
+            response[obj.Character.value] = obj.Character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+            response[obj.Character.value]["count"] = obj.CharacterPopularity.count
+    else:
+        for character in Character.query.all():
+            response[character.value] = character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+
     writeLog(request, '/api/character/all', None)
     return response
 
@@ -34,9 +43,9 @@ def getCharacter(character):
     dbChar = Character.query.get(character.lower())
     try:
         if request.args.get("extra"):
-            data= dbChar.serialize_extra_move_data()
+            data=dbChar.serialize_extra_move_data()
         else:
-            data= dbChar.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+            data=dbChar.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
     except AttributeError:
         return f'{character} is not a valid character', 404
     if "ERROR_MESSAGE" in data:
@@ -78,7 +87,11 @@ def getImages(move):
     return obj
 
 def writeLog(request, endpoint, resource):
+
     user=User.query.filter(User.apikey==request.headers.get('API-Key')).first()
+
+    if not request.remote_addr:
+        return
 
     if(not user):
         log = Log(ip=request.remote_addr, endpoint=endpoint, resource=resource)

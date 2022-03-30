@@ -54,7 +54,8 @@ class Character(db.Model):
         return includeExclude(fields,data,includes,excludes)
     def serialize_extra_move_data(self):
         moves = []
-        for move in self.moves:
+        moveData = db.session.query(Move).filter(Move.character==self.value).order_by(Move.moveindex).all()
+        for move in moveData:
             moveObj = {"name": move.getName(), "value": move.getValue(), "completed": move.getCompleted()}
             moves.append(moveObj)
 
@@ -74,6 +75,7 @@ class Character(db.Model):
 
 class Move(db.Model):
     __bind_key__ ="ultimate-hitboxes"
+    moveindex=db.Column(db.Integer)
     value=db.Column(db.String(80), primary_key=True)
     name=db.Column(db.String(80))
     character=db.Column(db.String(80), db.ForeignKey('character.value'))
@@ -224,15 +226,14 @@ class MoveLogs_production(db.Model):
 
 class User(db.Model):
     __bind_key__ ="ultimate-hitboxes"
-    id = db.Column(db.Integer,autoincrement=True, primary_key=True)
-    username = db.Column(db.String(20))
+    username = db.Column(db.String(20), primary_key=True)
     email = db.Column(db.String(80), unique=True)
     hashed_password = db.Column(db.String(256))
-    apikey = db.Column(db.String(20), unique=True)
+    apikey = db.Column(db.String(50), unique=True)
     usertype = db.Column(db.String(20), default="user")
     active = db.Column(db.Boolean, default=True)
     authenticated=db.Column(db.Boolean, default=False)
-    logs=db.relationship('Log', backref="user",lazy=True)
+    popularity=db.relationship('CharacterPopularity', backref="user",lazy=True)
 
     def __repr__(self):
         return self.username
@@ -253,18 +254,19 @@ class User(db.Model):
         return User.query.filter((func.lower(User.email) == value.lower()) | (func.lower(User.username) == value.lower())).first()
 class Log(db.Model):
     __bind_key__ ="logs"
+    __tablename__="data_logs"
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     datetime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     ip = db.Column(db.String(80))
     endpoint=db.Column(db.String(80))
     resource = db.Column(db.String(80))
-    username = db.Column(db.String(80), db.ForeignKey('user.username'))
+    username = db.Column(db.String(20))
 
 class CharacterPopularity(db.Model):
     __bind_key__ ="ultimate-hitboxes"
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     value=db.Column(db.String(80), db.ForeignKey('character.value'))
-    username = db.Column(db.String(80), db.ForeignKey('user.username'))
+    username = db.Column(db.String(20), db.ForeignKey('user.username'))
     count=db.Column(db.Integer, default=0)
 
 
