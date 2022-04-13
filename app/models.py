@@ -1,6 +1,26 @@
 from app import db
 import datetime
+import sqlalchemy
 from sqlalchemy import func
+
+def serialize(fields, includes, excludes, self):
+    if includes:
+            fields = includes
+    if excludes:
+        for field in excludes:
+            if field in fields:
+                fields.remove(field)
+
+    serializedData = {}
+    for field in fields:
+        if type(getattr(self, field)) is sqlalchemy.orm.collections.InstrumentedList:
+            arr = []
+            for item in getattr(self, field):
+                arr.append(item.serialize())
+            serializedData[field] = arr
+        else:
+            serializedData[field] = getattr(self, field)
+    return serializedData
 
 def includeExclude(fields, data, includes,excludes):
     if includes and excludes:
@@ -35,27 +55,13 @@ class Character(db.Model):
     def serialize(self, includes, excludes):
 
         fields = ["value", "name", "series", "number", "version", "id", "completed", "moves"]
+        
+        return serialize(fields, includes, excludes, self)
+    def serializeAll(self, includes, excludes):
+        fields = ["value", "name", "series", "number", "version", "id", "completed"]
+        
+        return serialize(fields, includes, excludes, self)
 
-        data = { 
-            "value": self.value,
-            "name": self.name,
-            "series": self.series,
-            "number": self.number,
-            "version": self.version,
-            "id": self.id,
-            "completed": self.completed
-        }
-        
-        if excludes is None or "moves" not in excludes:   
-            moves = []
-            for move in self.moves:
-                moves.append(move.getValue())
-            data["moves"] = moves
-        else:
-            fields.remove("moves")
-        
-        
-        return includeExclude(fields,data,includes,excludes)
     def serialize_extra_move_data(self):
         moves = []
         moveData = db.session.query(Move).filter(Move.character==self.value).order_by(Move.moveindex).all()

@@ -24,11 +24,11 @@ def characterData():
     if user:
         objs = db.session.query(Character,CharacterPopularity).join(CharacterPopularity).filter(CharacterPopularity.username==user.username).all()
         for obj in objs:
-            response[obj.Character.value] = obj.Character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+            response[obj.Character.value] = obj.Character.serializeAll(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
             response[obj.Character.value]["count"] = obj.CharacterPopularity.count
     else:
         for character in Character.query.all():
-            response[character.value] = character.serialize(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
+            response[character.value] = character.serializeAll(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
 
     writeLog(request, '/api/character/all', None)
     return response
