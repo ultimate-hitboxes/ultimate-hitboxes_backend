@@ -60,7 +60,7 @@ def getMove(move):
         moveData=Move.query.filter(func.lower(Move.value) == func.lower(move)).first().serialize()
     except AttributeError:
         return f'{move} is not a valid move', 404
-        
+
     if "include" in request.args and "exclude" in request.args:
         return "Can not use both 'include' and 'exclude' options", 400
 

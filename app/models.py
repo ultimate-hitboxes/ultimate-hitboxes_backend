@@ -97,6 +97,7 @@ class Move(db.Model):
     hurtboxes=db.relationship('Hurtbox', backref="Move", lazy=True)
     grabs=db.relationship('Grab', backref="Move", lazy=True)
     throws=db.relationship('Throw', backref="Move", lazy=True)
+    has_ids = db.Column(db.Boolean)
     #logs=db.relationship('MoveLog', backref="Move",lazy=True)
 
     #def __repr__(self):
@@ -112,6 +113,7 @@ class Move(db.Model):
             "faf": self.faf,
             "notes": self.notes,
             "completed": self.completed,
+            "has_ids": self.has_ids,
             "hitboxes": [hitbox.serialize() for hitbox in self.hitboxes],
             "hurtboxes": [hurtbox.serialize() for hurtbox in self.hurtboxes],
             "grabs": [grab.serialize() for grab in self.grabs],

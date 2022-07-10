@@ -35,14 +35,16 @@ def populateCharacterData():
                 #moveLogSQL=MoveLog(IP="localhost", MoveName=move["value"], URL="/api/move/"+move["value"])
                 #db.session.add(moveLogSQL)
 
-            print (move["value"])
+            has_ids = False
+            if move.get("has_ids") == True:
+                has_ids = True
             complete = True
             if move.get("complete") == False:
                 complete = False
             if "notes" in move:
-                moveSQL = Move(value=move["value"], name=move["name"], completed=complete, character=character["value"],faf=move["faf"],frames=move["frames"],notes=move["notes"],moveindex=moveindex)
+                moveSQL = Move(value=move["value"], name=move["name"], completed=complete, character=character["value"],faf=move["faf"],frames=move["frames"],notes=move["notes"],moveindex=moveindex, has_ids=has_ids)
             else:
-                moveSQL = Move(value=move["value"], name=move["name"], completed=complete, character=character["value"],faf=move["faf"],frames=move["frames"],moveindex=moveindex)
+                moveSQL = Move(value=move["value"], name=move["name"], completed=complete, character=character["value"],faf=move["faf"],frames=move["frames"],moveindex=moveindex, has_ids=has_ids)
             sqlData.append(moveSQL)
             moveindex+=1
             #writeToDB(moveSQL)

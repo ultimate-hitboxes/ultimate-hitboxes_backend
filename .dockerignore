@@ -7,3 +7,10 @@ compose-dev.yml
 /certs
 /app/.env
 /dbs
+
+#Old Data testing
+/data
+/data_bkp
+/newData
+/shieldstun_mults
+shieldstun.py
