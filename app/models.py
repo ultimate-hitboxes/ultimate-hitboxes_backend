@@ -141,6 +141,7 @@ class Hitbox(db.Model):
     notes=db.Column(db.String(200))
     data=db.Column(db.JSON)
     frames=db.Column(db.JSON)
+    id_color=db.Column(db.String(80))
 
     def serialize(self):
         return {
@@ -149,7 +150,8 @@ class Hitbox(db.Model):
             "data": self.data,
             "frames": self.frames["frames"],
             "color": self.color,
-            "notes": self.notes
+            "notes": self.notes,
+            "id_color": self.id_color
         }
 
 class Grab(db.Model):

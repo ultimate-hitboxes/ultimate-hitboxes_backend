@@ -3,9 +3,17 @@ import json
 from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox;
 import random
 from sqlalchemy import exc
+import os
 
 #db.reflect()
 #db.drop_all()
+
+if os.environ.get("DB_ENV") == "production":
+    print("The database is set to production. Continue?")
+    cont = input()
+    if cont.lower()!="y":
+        exit()
+
 
 db.create_all()
 
@@ -59,17 +67,23 @@ def populateCharacterData():
                         index = "0"+str(i)
                     else:
                         index=str(i)
-
+                    
                     hitbox = move["hitboxes"][i]
                     notes=hitbox["notes"]
                     color=hitbox["color"]
+                    if(hitbox.get("id_color")):
+                        id_color=hitbox["id_color"]
+                    else:
+                        id_color=None
                     frames={"frames": hitbox["frames"]}
 
                     hitbox.pop("notes")
                     hitbox.pop("color")
                     hitbox.pop("frames")
+                    if(hitbox.get("id_color")):
+                        hitbox.pop("id_color")
 
-                    hitboxSQL=Hitbox(value=move["value"]+"-hitbox"+index,move=move["value"],color=color,notes=notes,frames=frames,data=hitbox)
+                    hitboxSQL=Hitbox(value=move["value"]+"-hitbox"+index,move=move["value"],color=color,notes=notes,frames=frames,data=hitbox, id_color=id_color)
                     sqlData.append(hitboxSQL)
                     #db.session.add(hitboxSQL)
             if "grabs" in move:
