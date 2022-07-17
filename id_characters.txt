@@ -4,3 +4,4 @@
 04_samus
 04e_dark-samus
 05_yoshi
+06_kirby
