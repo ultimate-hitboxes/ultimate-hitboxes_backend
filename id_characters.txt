@@ -5,4 +5,7 @@
 04e_dark-samus
 05_yoshi
 06_kirby
-07_pikachu
+07_fox
+08_pikachu
+09_luigi
+10_ness
