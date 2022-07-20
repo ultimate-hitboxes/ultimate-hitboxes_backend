@@ -11,3 +11,5 @@
 10_ness
 11_captain-falcon
 12_jigglypuff
+13_peach
+13e_daisy
