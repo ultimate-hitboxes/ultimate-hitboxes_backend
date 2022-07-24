@@ -13,3 +13,6 @@
 12_jigglypuff
 13_peach
 13e_daisy
+14_bowser
+15_ice-climbers
+16_sheik
