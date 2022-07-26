@@ -18,3 +18,4 @@
 16_sheik
 17_zelda
 18_dr-mario
+19_pichu
