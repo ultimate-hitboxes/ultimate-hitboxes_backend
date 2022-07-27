@@ -21,3 +21,4 @@
 19_pichu
 20_falco
 21_marth
+21e_lucina
