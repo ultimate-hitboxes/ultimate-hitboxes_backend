@@ -19,3 +19,5 @@
 17_zelda
 18_dr-mario
 19_pichu
+20_falco
+21_marth
