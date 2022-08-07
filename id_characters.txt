@@ -23,3 +23,7 @@
 21_marth
 21e_lucina
 22_young-link
+23_ganondorf
+24_mewtwo
+25_roy
+25e_chrom
