@@ -30,4 +30,5 @@
 26_mr-game-watch
 27_meta-knight
 28_pit
-28e_dark-pit 
+28e_dark-pit
+29_zero-suit-samus 
