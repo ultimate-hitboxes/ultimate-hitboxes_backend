@@ -31,4 +31,6 @@
 27_meta-knight
 28_pit
 28e_dark-pit
-29_zero-suit-samus 
+29_zero-suit-samus
+30_wario
+31_snake 
