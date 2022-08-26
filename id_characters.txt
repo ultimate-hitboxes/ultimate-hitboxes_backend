@@ -33,4 +33,8 @@
 28e_dark-pit
 29_zero-suit-samus
 30_wario
-31_snake 
+31_snake
+32_ike
+33_squirtle
+34_ivysaur
+35_charizard
