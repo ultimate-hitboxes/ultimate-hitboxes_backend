@@ -38,3 +38,4 @@
 33_squirtle
 34_ivysaur
 35_charizard
+36_diddy-kong
