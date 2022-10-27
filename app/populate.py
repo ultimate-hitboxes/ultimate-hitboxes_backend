@@ -1,27 +1,29 @@
-from app import db
+from app import db, app
 import json
 from app.models import Character, Move, Hitbox,Grab,Throw,Hurtbox;
 import random
 from sqlalchemy import exc
 import os
 
-#db.reflect()
-#db.drop_all()
 
-if os.environ.get("DB_ENV") == "production":
-    print("The database is set to production. Continue?")
-    cont = input()
-    if cont.lower()!="y":
-        exit()
+def startup():
+    print("start")
+    with app.app_context():
+        if os.environ.get("DB_ENV") == "production":
+            print("The database is set to production. Continue?")
+            cont = input()
+            if cont.lower()!="y":
+                exit()
+
+        db.create_all()
+
+        dataFile=open('./data/characterData.json')
+        data = json.load(dataFile)
+        populateCharacterData(data)
+    print("done")
 
 
-db.create_all()
-
-dataFile=open('./data/characterData.json')
-data = json.load(dataFile)
-
-
-def populateCharacterData():
+def populateCharacterData(data):
     
     sqlData = []
 
@@ -156,6 +158,3 @@ def writeToDB(sqlData):
         for statement in sqlData:
             db.session.merge(statement)
         db.session.commit()
-
-
-populateCharacterData()

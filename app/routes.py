@@ -1,9 +1,12 @@
+import os
+
 from flask import request
 
 from app import app, client, db
 from app.models import Character,Move, Log, User,CharacterPopularity
 from app.get_images import get_images
 from sqlalchemy import func
+from app.populate import startup
 
 def checkIncludesExcludes(includeExclude):
     if not includeExclude:
@@ -19,7 +22,7 @@ def characterData():
     if("include" in request.args and "exclude" in request.args):
         return "Can not use both 'include' and 'exclude' options", 400
 
-
+    print("here")
     user=User.query.filter(User.apikey==request.headers.get('API-Key')).first()
     if user:
         objs = db.session.query(Character,CharacterPopularity).join(CharacterPopularity).filter(CharacterPopularity.username==user.username).all()
@@ -27,6 +30,7 @@ def characterData():
             response[obj.Character.value] = obj.Character.serializeAll(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
             response[obj.Character.value]["count"] = obj.CharacterPopularity.count
     else:
+        
         for character in Character.query.all():
             response[character.value] = character.serializeAll(checkIncludesExcludes(request.args.get("include")), checkIncludesExcludes(request.args.get("exclude")))
 
@@ -123,3 +127,10 @@ def writeToDB(SQL):
     for statement in SQL:
         db.session.add(statement)
     db.session.commit()
+
+@app.route('/api/db', methods=["GET"])
+def getDb():
+    if os.environ.get("FLASK_ENV") == "production":
+        return "Access Denied", 403
+    startup()
+    return {}
