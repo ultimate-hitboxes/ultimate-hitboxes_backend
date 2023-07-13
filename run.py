@@ -16,8 +16,9 @@ if __name__ == "__main__":
 
         ssl_cert = os.environ.get("CERT")
         ssl_key = os.environ.get("KEY")
+        pw = os.environ.get("SSL_PW")
 
-        server.ssl_adapter =  BuiltinSSLAdapter(ssl_cert, ssl_key, None)
+        server.ssl_adapter =  BuiltinSSLAdapter(ssl_cert, ssl_key, pw)
         
         try:
             server.start()
